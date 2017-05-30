@@ -201,6 +201,27 @@ func (r *Rand) Perm(n int) []int {
 	return m
 }
 
+// PermGen produces a pseudo-random permutation of the integers [0,n) just like Perm(), but
+// the output permutation is provided in the form of a generator.
+func (r *Rand) PermGen(n int) chan int {
+	c := make(chan int)
+	go func() {
+		m := make([]int, n)
+		for i := 0; i < n; i++ {
+			// Random int between i (included) and n (excluded).
+			j := n - 1 - r.Intn(n-i)
+			if j == i {
+				c <- m[i]
+			} else {
+				c <- m[j]
+				m[j] = m[i]
+			}
+		}
+		close(c)
+	}()
+	return c
+}
+
 // Read generates len(p) random bytes and writes them into p. It
 // always returns len(p) and a nil error.
 // Read should not be called concurrently with any other Rand method.
